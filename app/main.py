@@ -70,3 +70,15 @@ def get_order(order_id: int, db: Session = Depends(get_db)):
     if db_order is None:
         raise HTTPException(status_code=404, detail="Order not found")
     return db_order
+
+
+@app.put("/orders/{order_id}", response_model=schemas.Order)
+def update_order(
+    order_id: int,
+    order: schemas.OrderUpdate,
+    db: Session = Depends(get_db)
+):
+    db_order = crud.update_order(db=db, order_id=order_id, order=order)
+    if db_order is None:
+        raise HTTPException(status_code=404, detail="Order not found")
+    return db_order

@@ -101,6 +101,10 @@ class OrderItemCreate(OrderItemBase):
     shot: EspressoShotEnum = EspressoShotEnum.none
 
 
+class OrderItemUpdate(OrderItemCreate):
+    id: int
+
+
 class OrderItem(OrderItemBase):
     id: int
     product: Product
@@ -120,6 +124,10 @@ class OrderCreate(OrderBase):
     location: ConsumeLocationEnum
     items: List[OrderItemCreate]
     status: Optional[OrderStatusEnum] = OrderStatusEnum.pending
+
+
+class OrderUpdate(OrderCreate):
+    items: List[OrderItemUpdate]
 
 
 class Order(OrderBase):

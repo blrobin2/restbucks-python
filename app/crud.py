@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from typing import Union
 
 from . import models, schemas
 
@@ -39,9 +40,14 @@ def get_orders(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Order).offset(skip).limit(limit).all()
 
 
+def get_order_item(db: Session, order_item_id: int):
+    return db.query(models.OrderItem)\
+        .filter(models.OrderItem.id == order_item_id).first()
+
+
 def create_order(db: Session, order: schemas.OrderCreate):
     db_order_items = [
-        order_item_schema_to_order_item(db, item)
+        order_item_create_schema_to_order_item(db, item)
         for item
         in order.items
     ]
@@ -58,14 +64,64 @@ def create_order(db: Session, order: schemas.OrderCreate):
     return db_order
 
 
-def order_item_schema_to_order_item(
+def update_order(db: Session, order_id: int, order: schemas.OrderUpdate):
+    db_order = get_order(db, order_id)
+    if not db_order:
+        return None
+
+    db_order_items = [
+        order_item_update_schema_to_order_item(db, item)
+        for item
+        in order.items
+    ]
+    location = get_consume_location_by_name(db, order.location)
+    status = get_order_status_by_name(db, order.status)
+    db_order.location = location
+    db_order.status = status
+    db_order.items = db_order_items
+    db.commit()
+    db.refresh(db_order)
+    return db_order
+
+
+def order_item_create_schema_to_order_item(
     db: Session,
     order_item: schemas.OrderItemCreate
 ):
+    order_items_elements = get_shared_order_item_elements(db, order_item)
     return models.OrderItem(
+        product=order_items_elements['product'],
+        size=order_items_elements['size'],
+        milk=order_items_elements['milk'],
+        espresso_shot=order_items_elements['espresso_shot'],
+        quantity=order_item.quantity
+    )
+
+
+def order_item_update_schema_to_order_item(
+    db: Session,
+    order_item: schemas.OrderItemUpdate
+):
+    db_order_item = get_order_item(db, order_item.id)
+    if not db_order_item:
+        return order_item_create_schema_to_order_item(db, order_item)
+
+    order_items_elements = get_shared_order_item_elements(db, order_item)
+    db_order_item.product = order_items_elements['product']
+    db_order_item.size = order_items_elements['size']
+    db_order_item.milk = order_items_elements['milk']
+    db_order_item.espresso_shot = order_items_elements['espresso_shot']
+    db_order_item.quantity = order_item.quantity
+    return db_order_item
+
+
+def get_shared_order_item_elements(
+    db: Session,
+    order_item: Union[schemas.OrderItemCreate, schemas.OrderItemUpdate]
+):
+    return dict(
         product=get_product_by_name(db, order_item.product_name),
         size=get_size_by_name(db, order_item.size),
         milk=get_milk_by_name(db, order_item.milk),
         espresso_shot=get_espresso_shot_by_name(db, order_item.shot),
-        quantity=order_item.quantity
     )
