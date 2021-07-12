@@ -1,7 +1,7 @@
 from typing import List
 
 from pprint import pprint
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from sqlalchemy.orm import Session
 
 from . import crud, models, schemas
@@ -9,7 +9,10 @@ from .database import SessionLocal, engine
 
 models.Base.metadata.create_all(bind=engine)
 
-app = FastAPI()
+app = FastAPI(
+    title="Restbucks",
+    description="An API for taking orders in a coffee shop"
+)
 
 
 def get_db():
@@ -25,10 +28,14 @@ def get_db():
 def seed_database(db: Session = Depends(get_db)):
     db_milks = [models.Milk(name=milk.value) for milk in schemas.MilkEnum]
     db_sizes = [models.Size(name=size.value) for size in schemas.SizeEnum]
-    db_shots = [models.EspressoShot(name=shot.value) for shot in schemas.EspressoShotEnum]
-    db_locations = [models.ConsumeLocation(name=location.value) for location in schemas.ConsumeLocationEnum]
-    db_statuses = [models.OrderStatus(name=status.value) for status in schemas.OrderStatusEnum]
-    db_products = [models.Product(name=product.value) for product in schemas.ProductEnum]
+    db_shots = [models.EspressoShot(name=shot.value)
+                for shot in schemas.EspressoShotEnum]
+    db_locations = [models.ConsumeLocation(
+        name=location.value) for location in schemas.ConsumeLocationEnum]
+    db_statuses = [models.OrderStatus(name=status.value)
+                   for status in schemas.OrderStatusEnum]
+    db_products = [models.Product(name=product.value)
+                   for product in schemas.ProductEnum]
     db.add_all(db_milks)
     db.add_all(db_sizes)
     db.add_all(db_shots)
@@ -39,10 +46,12 @@ def seed_database(db: Session = Depends(get_db)):
     db.commit()
     return True
 
+
 @app.post("/orders", response_model=schemas.Order)
-def create_order(order: schemas.OrderCreate, db: Session = Depends(get_db)):
+def create_order(order: schemas.OrderCreate, request: Request, response: Response, db: Session = Depends(get_db)):
     db_order = crud.create_order(db=db, order=order)
-    pprint(db_order)
+    client_host = request.client.host
+    response.headers['Location'] = f"{client_host}/orders/{db_order.id}"
     return db_order
 
 

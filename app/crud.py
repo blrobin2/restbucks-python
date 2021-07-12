@@ -36,7 +36,8 @@ def get_orders(db: Session, skip: int = 0, limit: int = 100):
 
 
 def create_order(db: Session, order: schemas.OrderCreate):
-    db_order_items = [order_item_schema_to_order_item(db, item) for item in order.items]
+    db_order_items = [order_item_schema_to_order_item(
+        db, item) for item in order.items]
     location = get_consume_location_by_name(db, order.location)
     status = get_order_status_by_name(db, order.status)
     db_order = models.Order(
@@ -48,6 +49,7 @@ def create_order(db: Session, order: schemas.OrderCreate):
     db.commit()
     db.refresh(db_order)
     return db_order
+
 
 def order_item_schema_to_order_item(db: Session, order_item: schemas.OrderItemCreate):
     return models.OrderItem(

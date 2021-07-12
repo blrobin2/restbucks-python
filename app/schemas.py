@@ -102,7 +102,7 @@ class OrderItemCreate(OrderItemBase):
 
 
 class OrderItem(OrderItemBase):
-    id :int
+    id: int
     product: Product
     size: Size
     milk: Milk
