@@ -68,3 +68,6 @@ class Order(OrderBase):
     status: Optional[OrderStatus]
     cost: Optional[int]
 
+    class Config:
+        orm_model =True
+
