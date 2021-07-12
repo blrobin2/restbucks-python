@@ -1,5 +1,6 @@
 from typing import List
 
+from pprint import pprint
 from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
 
@@ -19,9 +20,30 @@ def get_db():
         db.close()
 
 
+# Obviously, don't do this in real life
+@app.post("/seed")
+def seed_database(db: Session = Depends(get_db)):
+    db_milks = [models.Milk(name=milk.value) for milk in schemas.MilkEnum]
+    db_sizes = [models.Size(name=size.value) for size in schemas.SizeEnum]
+    db_shots = [models.EspressoShot(name=shot.value) for shot in schemas.EspressoShotEnum]
+    db_locations = [models.ConsumeLocation(name=location.value) for location in schemas.ConsumeLocationEnum]
+    db_statuses = [models.OrderStatus(name=status.value) for status in schemas.OrderStatusEnum]
+    db_products = [models.Product(name=product.value) for product in schemas.ProductEnum]
+    db.add_all(db_milks)
+    db.add_all(db_sizes)
+    db.add_all(db_shots)
+    db.add_all(db_locations)
+    db.add_all(db_statuses)
+    db.add_all(db_products)
+
+    db.commit()
+    return True
+
 @app.post("/orders", response_model=schemas.Order)
 def create_order(order: schemas.OrderCreate, db: Session = Depends(get_db)):
-    return crud.create_order(db=db, order=order)
+    db_order = crud.create_order(db=db, order=order)
+    pprint(db_order)
+    return db_order
 
 
 @app.get("/orders", response_model=List[schemas.Order])

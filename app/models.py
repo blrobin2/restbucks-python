@@ -13,6 +13,9 @@ class Milk(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True, nullable=False)
 
+    def __repr__(self):
+        return f"{self.name}"
+
 
 class Size(Base):
     __tablename__ = "sizes"
@@ -20,33 +23,48 @@ class Size(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True, nullable=False)
 
+    def __repr__(self):
+        return f"{self.name}"
+
 
 class EspressoShot(Base):
     __tablename__ = "espresso_shots"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(unique=True, index=True, nullable=False)
+    name = Column(String, unique=True, index=True, nullable=False)
+
+    def __repr__(self):
+        return f"{self.name}"
 
 
 class ConsumeLocation(Base):
     __tablename__ = "consume_locations"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(unique=True, index=True, nullable=False)
+    name = Column(String, unique=True, index=True, nullable=False)
+
+    def __repr__(self):
+        return f"{self.name}"
 
 
 class Product(Base):
     __tablename__ = "products"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(unique=True, index=True, nullable=False)
+    name = Column(String, unique=True, index=True, nullable=False)
+
+    def __repr__(self):
+        return f"{self.name}"
 
 
 class OrderStatus(Base):
     __tablename__ = "order_statuses"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(unique=True, index=True, nullable=False)
+    name = Column(String, unique=True, index=True, nullable=False)
+
+    def __repr__(self):
+        return f"{self.name}"
 
 
 class Order(Base):
@@ -57,9 +75,12 @@ class Order(Base):
     location_id = Column(Integer, ForeignKey("consume_locations.id"))
     status_id = Column(Integer, ForeignKey("order_statuses.id"))
 
-    location = relationship("ConsumeLocation")
-    status = relationship("OrderStatus")
-    items = relationship("OrderItem", back_populates="order")
+    location = relationship("ConsumeLocation", lazy="joined")
+    status = relationship("OrderStatus", lazy="joined")
+    items = relationship("OrderItem", back_populates="order", lazy="joined")
+
+    def __repr__(self):
+        return f"Order(id={self.id!r}, location={self.location!r}, status={self.status!r}, items={self.items!r})"
 
     @hybrid_property
     def total_cost(self):
@@ -69,7 +90,7 @@ class Order(Base):
     def total_cost(cls):
         return func.concat('$', cls.total / 100)
 
-    @total.setter
+    @total_cost.setter
     def total_cost(self, value):
         self.total = value * 100
 
@@ -78,13 +99,18 @@ class OrderItem(Base):
     __tablename__ = "order_items"
 
     id = Column(Integer, primary_key=True, index=True)
+    order_id = Column(Integer, ForeignKey("orders.id"))
     quantity = Column(Integer, nullable=False, default=1)
     product_id = Column(Integer, ForeignKey("products.id"))
     milk_id = Column(Integer, ForeignKey("milks.id"))
     size_id = Column(Integer, ForeignKey("sizes.id"))
     espresso_shot_id = Column(Integer, ForeignKey("espresso_shots.id"))
 
-    order = relationship("Order", back_populates="items")
-    milk = relationship("Milk")
-    size = relationship("Size")
-    espresso_shot = relationship("EspressoShot")
+    order = relationship("Order", back_populates="items", lazy="joined")
+    product = relationship("Product", lazy="joined")
+    milk = relationship("Milk", lazy="joined")
+    size = relationship("Size", lazy="joined")
+    espresso_shot = relationship("EspressoShot", lazy="joined")
+
+    def __repr__(self):
+        return f"OrderItem(id={self.id!r}, product={self.product!r}, milk={self.milk!r}, size={self.size!r}, shot={self.espresso_shot!r})"
