@@ -4,7 +4,8 @@ from . import models, schemas
 
 
 def get_product_by_name(db: Session, product: str):
-    return db.query(models.Product).filter(models.Product.name == product).first()
+    return db.query(models.Product)\
+        .filter(models.Product.name == product).first()
 
 
 def get_milk_by_name(db: Session, milk: str):
@@ -16,15 +17,18 @@ def get_size_by_name(db: Session, size: str):
 
 
 def get_espresso_shot_by_name(db: Session, shot: str):
-    return db.query(models.EspressoShot).filter(models.EspressoShot.name == shot).first()
+    return db.query(models.EspressoShot)\
+        .filter(models.EspressoShot.name == shot).first()
 
 
 def get_consume_location_by_name(db: Session, location: str):
-    return db.query(models.ConsumeLocation).filter(models.ConsumeLocation.name == location).first()
+    return db.query(models.ConsumeLocation)\
+        .filter(models.ConsumeLocation.name == location).first()
 
 
 def get_order_status_by_name(db: Session, status: str):
-    return db.query(models.OrderStatus).filter(models.OrderStatus.name == status).first()
+    return db.query(models.OrderStatus)\
+        .filter(models.OrderStatus.name == status).first()
 
 
 def get_order(db: Session, order_id: int):
@@ -36,8 +40,11 @@ def get_orders(db: Session, skip: int = 0, limit: int = 100):
 
 
 def create_order(db: Session, order: schemas.OrderCreate):
-    db_order_items = [order_item_schema_to_order_item(
-        db, item) for item in order.items]
+    db_order_items = [
+        order_item_schema_to_order_item(db, item)
+        for item
+        in order.items
+    ]
     location = get_consume_location_by_name(db, order.location)
     status = get_order_status_by_name(db, order.status)
     db_order = models.Order(
@@ -51,7 +58,10 @@ def create_order(db: Session, order: schemas.OrderCreate):
     return db_order
 
 
-def order_item_schema_to_order_item(db: Session, order_item: schemas.OrderItemCreate):
+def order_item_schema_to_order_item(
+    db: Session,
+    order_item: schemas.OrderItemCreate
+):
     return models.OrderItem(
         product=get_product_by_name(db, order_item.product_name),
         size=get_size_by_name(db, order_item.size),

@@ -1,6 +1,5 @@
 from typing import List
 
-from pprint import pprint
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from sqlalchemy.orm import Session
 
@@ -48,7 +47,12 @@ def seed_database(db: Session = Depends(get_db)):
 
 
 @app.post("/orders", response_model=schemas.Order)
-def create_order(order: schemas.OrderCreate, request: Request, response: Response, db: Session = Depends(get_db)):
+def create_order(
+    order: schemas.OrderCreate,
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db)
+):
     db_order = crud.create_order(db=db, order=order)
     client_host = request.client.host
     response.headers['Location'] = f"{client_host}/orders/{db_order.id}"

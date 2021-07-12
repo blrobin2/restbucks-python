@@ -80,7 +80,10 @@ class Order(Base):
     items = relationship("OrderItem", back_populates="order", lazy="joined")
 
     def __repr__(self):
-        return f"Order(id={self.id!r}, location={self.location!r}, status={self.status!r}, items={self.items!r})"
+        return (
+            f"Order(id={self.id!r}, location={self.location!r}, "
+            "status={self.status!r}, items={self.items!r})"
+        )
 
     @hybrid_property
     def total_cost(self):
@@ -113,4 +116,8 @@ class OrderItem(Base):
     espresso_shot = relationship("EspressoShot", lazy="joined")
 
     def __repr__(self):
-        return f"OrderItem(id={self.id!r}, product={self.product!r}, milk={self.milk!r}, size={self.size!r}, shot={self.espresso_shot!r})"
+        return (
+            f"OrderItem(id={self.id!r}, product={self.product!r}, "
+            "milk={self.milk!r}, size={self.size!r}, "
+            "shot={self.espresso_shot!r})"
+        )
