@@ -7,6 +7,7 @@ authors = ["Bennie Robinson <bennrobi@cisco.com>"]
 [tool.poetry.dependencies]
 python = "^3.8"
 fastapi = {extras = ["all"], version = "^0.66.0"}
+SQLAlchemy = "^1.4.20"
 
 [tool.poetry.dev-dependencies]
 
