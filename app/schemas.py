@@ -60,6 +60,7 @@ class OrderBase(BaseModel):
 
 class OrderCreate(OrderBase):
     items: List[OrderItemCreate]
+    status: Optional[OrderStatus] = OrderStatus.pending
 
 
 class Order(OrderBase):

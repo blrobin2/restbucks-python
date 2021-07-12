@@ -53,10 +53,9 @@ class Order(Base):
     __tablename__ = "orders"
 
     id = Column(Integer, primary_key=True, index=True)
-    total = Column(Integer, nullable=False)
+    total = Column(Integer)
     location_id = Column(Integer, ForeignKey("consume_locations.id"))
     status_id = Column(Integer, ForeignKey("order_statuses.id"))
-    currency_id = Column(Integer, ForeignKey("currencies.id"))
 
     location = relationship("ConsumeLocation")
     status = relationship("OrderStatus")
@@ -71,6 +70,9 @@ class Order(Base):
     def total_cost(cls):
         return func.concat('$', cls.total / 100)
 
+    @total.setter
+    def total_cost(self, value):
+        self.total = value * 100
 
 class OrderItem(Base):
     __tablename__ = "order_items"
