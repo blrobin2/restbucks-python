@@ -1,3 +1,4 @@
+import datetime
 from sqlalchemy.orm import Session
 from typing import Union
 
@@ -79,6 +80,7 @@ def update_order(db: Session, order_id: int, order: schemas.OrderUpdate):
     db_order.location = location
     db_order.status = status
     db_order.items = db_order_items
+    db_order.updated_at = datetime.datetime.now()
     db.commit()
     db.refresh(db_order)
     return db_order

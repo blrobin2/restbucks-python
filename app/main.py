@@ -1,6 +1,7 @@
 from typing import List
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
+from fastapi_etag import Etag, add_exception_handler
 from sqlalchemy.orm import Session
 
 from . import crud, models, schemas
@@ -12,6 +13,7 @@ app = FastAPI(
     title="Restbucks",
     description="An API for taking orders in a coffee shop"
 )
+add_exception_handler(app)
 
 
 def get_db():
@@ -46,6 +48,13 @@ def seed_database(db: Session = Depends(get_db)):
     return True
 
 
+def order_etag(request: Request):
+    db = SessionLocal()
+    db_order = crud.get_order(db, request.path_params['order_id'])
+    db.close()
+    return f"order:{db_order.id}{db_order.updated_at}"
+
+
 @app.post("/orders", response_model=schemas.Order, tags=["orders"])
 def create_order(
     order: schemas.OrderCreate,
@@ -64,7 +73,12 @@ def get_orders(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     return crud.get_orders(db, skip=skip, limit=limit)
 
 
-@app.get("/orders/{order_id}", response_model=schemas.Order, tags=["orders"])
+@app.get(
+    "/orders/{order_id}",
+    response_model=schemas.Order,
+    tags=["orders"],
+    dependencies=[Depends(Etag(order_etag))]
+)
 def get_order(order_id: int, db: Session = Depends(get_db)):
     db_order = crud.get_order(db, order_id=order_id)
     if db_order is None:

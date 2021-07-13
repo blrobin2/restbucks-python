@@ -1,9 +1,9 @@
-from sqlalchemy import Column, ForeignKey, Integer, String, func
+from sqlalchemy import Column, ForeignKey, DateTime, Integer, String, func
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
 
+import datetime
 import locale
-import pprint
 
 from .database import Base
 
@@ -75,6 +75,12 @@ class Order(Base):
     total = Column(Integer)
     location_id = Column(Integer, ForeignKey("consume_locations.id"))
     status_id = Column(Integer, ForeignKey("order_statuses.id"))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=datetime.datetime.now
+    )
 
     location = relationship("ConsumeLocation", lazy="joined")
     status = relationship("OrderStatus", lazy="joined")
