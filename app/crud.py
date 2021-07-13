@@ -84,6 +84,20 @@ def update_order(db: Session, order_id: int, order: schemas.OrderUpdate):
     return db_order
 
 
+def archive_order(db: Session, order_id: int):
+    db_order = get_order(db, order_id)
+    if not db_order:
+        return None
+
+    if not db_order.can_delete():
+        return False
+
+    cancel_status = get_order_status_by_name(db, 'cancelled')
+    db_order.status = cancel_status
+    db.commit()
+    return True
+
+
 def order_item_create_schema_to_order_item(
     db: Session,
     order_item: schemas.OrderItemCreate

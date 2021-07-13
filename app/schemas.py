@@ -65,6 +65,7 @@ class OrderStatusEnum(str, Enum):
     paid = 'paid'
     served = 'served'
     collected = 'collected'
+    cancelled = 'cancelled'
 
 
 class OrderStatus(BaseModel):

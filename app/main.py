@@ -46,7 +46,7 @@ def seed_database(db: Session = Depends(get_db)):
     return True
 
 
-@app.post("/orders", response_model=schemas.Order)
+@app.post("/orders", response_model=schemas.Order, tags=["orders"])
 def create_order(
     order: schemas.OrderCreate,
     request: Request,
@@ -59,12 +59,12 @@ def create_order(
     return db_order
 
 
-@app.get("/orders", response_model=List[schemas.Order])
+@app.get("/orders", response_model=List[schemas.Order], tags=["orders"])
 def get_orders(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     return crud.get_orders(db, skip=skip, limit=limit)
 
 
-@app.get("/orders/{order_id}", response_model=schemas.Order)
+@app.get("/orders/{order_id}", response_model=schemas.Order, tags=["orders"])
 def get_order(order_id: int, db: Session = Depends(get_db)):
     db_order = crud.get_order(db, order_id=order_id)
     if db_order is None:
@@ -72,7 +72,7 @@ def get_order(order_id: int, db: Session = Depends(get_db)):
     return db_order
 
 
-@app.put("/orders/{order_id}", response_model=schemas.Order)
+@app.put("/orders/{order_id}", response_model=schemas.Order, tags=["orders"])
 def update_order(
     order_id: int,
     order: schemas.OrderUpdate,
@@ -82,3 +82,18 @@ def update_order(
     if db_order is None:
         raise HTTPException(status_code=404, detail="Order not found")
     return db_order
+
+
+@app.delete("/orders/{order_id}", status_code=204, tags=["orders"])
+def archive_order(
+    order_id: int,
+    db: Session = Depends(get_db)
+):
+    status = crud.archive_order(db, order_id)
+    if status is None:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    if status is False:
+        raise HTTPException(status_code=405, detail="Order already served")
+
+    return Response(status_code=204)

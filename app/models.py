@@ -3,6 +3,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
 
 import locale
+import pprint
 
 from .database import Base
 
@@ -96,6 +97,11 @@ class Order(Base):
     @total_cost.setter
     def total_cost(self, value):
         self.total = value * 100
+
+    def can_delete(self) -> bool:
+        current_status = self.status.name
+        return current_status != 'served' and current_status != 'collected'\
+            and current_status != 'cancelled'
 
 
 class OrderItem(Base):
