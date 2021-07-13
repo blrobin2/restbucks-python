@@ -86,7 +86,12 @@ def get_order(order_id: int, db: Session = Depends(get_db)):
     return db_order
 
 
-@app.put("/orders/{order_id}", response_model=schemas.Order, tags=["orders"])
+@app.put(
+    "/orders/{order_id}",
+    response_model=schemas.Order,
+    tags=["orders"],
+    dependencies=[Depends(Etag(order_etag))]
+)
 def update_order(
     order_id: int,
     order: schemas.OrderUpdate,
@@ -98,7 +103,12 @@ def update_order(
     return db_order
 
 
-@app.delete("/orders/{order_id}", status_code=204, tags=["orders"])
+@app.delete(
+    "/orders/{order_id}",
+    status_code=204,
+    tags=["orders"],
+    dependencies=[Depends(Etag(order_etag))]
+)
 def archive_order(
     order_id: int,
     db: Session = Depends(get_db)
