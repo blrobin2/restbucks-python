@@ -77,7 +77,11 @@ def get_orders(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     "/orders/{order_id}",
     response_model=schemas.Order,
     tags=["orders"],
-    dependencies=[Depends(Etag(order_etag))]
+    dependencies=[Depends(Etag(order_etag))],
+    responses={
+        '404': dict(model=schemas.ErrorMessage, description='Order not found'),
+        '304': dict(description='Not Modified: Cache hit, ETag not expired')
+    }
 )
 def get_order(order_id: int, db: Session = Depends(get_db)):
     db_order = crud.get_order(db, order_id=order_id)
@@ -90,7 +94,11 @@ def get_order(order_id: int, db: Session = Depends(get_db)):
     "/orders/{order_id}",
     response_model=schemas.Order,
     tags=["orders"],
-    dependencies=[Depends(Etag(order_etag))]
+    dependencies=[Depends(Etag(order_etag))],
+    responses={
+        '404': dict(model=schemas.ErrorMessage, description='Order not found'),
+        '412': dict(description='Unprocessable Entity: ETag has expired')
+    }
 )
 def update_order(
     order_id: int,
@@ -107,7 +115,16 @@ def update_order(
     "/orders/{order_id}",
     status_code=204,
     tags=["orders"],
-    dependencies=[Depends(Etag(order_etag))]
+    dependencies=[Depends(Etag(order_etag))],
+    responses={
+        '404': dict(model=schemas.ErrorMessage, description='Order not found'),
+        '405': dict(
+            model=schemas.ErrorMessage,
+            description='Method Not Allowed: Order has already been served '
+            'or cancelled'
+        ),
+        '412': dict(description='Unprocessable Entity: ETag has expired')
+    }
 )
 def archive_order(
     order_id: int,
@@ -118,6 +135,9 @@ def archive_order(
         raise HTTPException(status_code=404, detail="Order not found")
 
     if status is False:
-        raise HTTPException(status_code=405, detail="Order already served")
+        raise HTTPException(
+            status_code=405,
+            detail="Order already served or cancelled"
+        )
 
     return Response(status_code=204)

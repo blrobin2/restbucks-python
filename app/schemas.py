@@ -3,6 +3,10 @@ from pydantic import BaseModel
 from typing import List, Optional
 
 
+class ErrorMessage(BaseModel):
+    detail: str
+
+
 class MilkEnum(str, Enum):
     none = 'none'
     skim = 'skim'
@@ -134,7 +138,7 @@ class OrderUpdate(OrderCreate):
 class Order(OrderBase):
     id: int
     location: ConsumeLocation
-    items: List[OrderItem] = []
+    items: List[OrderItem]
     status: Optional[OrderStatus]
     total: Optional[int]
 
