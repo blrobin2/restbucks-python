@@ -58,7 +58,7 @@ def create_order(db: Session, order: schemas.OrderCreate):
         in order.items
     ]
     location = get_consume_location_by_name(db, order.location)
-    status = get_order_status_by_name(db, order.status)
+    status = get_order_status_by_name(db, str(order.status))
     db_order = models.Order(
         location=location,
         status=status,
@@ -81,7 +81,7 @@ def update_order(db: Session, order_id: int, order: schemas.OrderUpdate):
         in order.items
     ]
     location = get_consume_location_by_name(db, order.location)
-    status = get_order_status_by_name(db, order.status)
+    status = get_order_status_by_name(db, str(order.status))
     db_order.location = location
     db_order.status = status
     db_order.items = db_order_items
@@ -108,7 +108,7 @@ def archive_order(db: Session, order_id: int):
 def order_item_create_schema_to_order_item(
     db: Session,
     order_item: schemas.OrderItemCreate
-):
+) -> models.OrderItem:
     order_items_elements = get_shared_order_item_elements(db, order_item)
     return models.OrderItem(
         product=order_items_elements['product'],

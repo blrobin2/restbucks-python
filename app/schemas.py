@@ -131,8 +131,10 @@ class OrderCreate(OrderBase):
     status: Optional[OrderStatusEnum] = OrderStatusEnum.pending
 
 
-class OrderUpdate(OrderCreate):
+class OrderUpdate(OrderBase):
+    location: ConsumeLocationEnum
     items: List[OrderItemUpdate]
+    status: Optional[OrderStatusEnum] = OrderStatusEnum.pending
 
 
 class Order(OrderBase):

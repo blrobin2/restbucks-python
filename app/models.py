@@ -1,5 +1,10 @@
+from typing import TYPE_CHECKING
 from sqlalchemy import Column, ForeignKey, DateTime, Integer, String, func
-from sqlalchemy.ext.hybrid import hybrid_property
+if TYPE_CHECKING:
+    hybrid_property = property
+else:
+    from sqlalchemy.ext.hybrid import hybrid_property
+
 from sqlalchemy.orm import relationship
 
 import datetime
@@ -84,7 +89,12 @@ class Order(Base):
 
     location = relationship("ConsumeLocation", lazy="joined")
     status = relationship("OrderStatus", lazy="joined")
-    items = relationship("OrderItem", back_populates="order", lazy="joined")
+    items = relationship(
+        "OrderItem",
+        back_populates="order",
+        lazy="joined",
+        uselist=True
+    )
 
     def __repr__(self):
         return (
