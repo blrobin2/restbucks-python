@@ -4,8 +4,8 @@ from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi_etag import Etag, add_exception_handler
 from sqlalchemy.orm import Session
 
-from . import crud, models, schemas
-from .database import SessionLocal, engine
+from . import crud, models, schemas, deps
+from .database import engine
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -16,17 +16,9 @@ app = FastAPI(
 add_exception_handler(app)
 
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
 # Obviously, don't do this in real life
 @app.post("/seed")
-def seed_database(db: Session = Depends(get_db)):
+def seed_database(db: Session = Depends(deps.get_db)):
     db_milks = [models.Milk(name=milk.value) for milk in schemas.MilkEnum]
     db_sizes = [models.Size(name=size.value) for size in schemas.SizeEnum]
     db_shots = [models.EspressoShot(name=shot.value)
@@ -48,19 +40,12 @@ def seed_database(db: Session = Depends(get_db)):
     return True
 
 
-def order_etag(request: Request):
-    db = SessionLocal()
-    db_order = crud.get_order(db, request.path_params['order_id'])
-    db.close()
-    return f"order:{db_order.id}{db_order.updated_at}"
-
-
 @app.post("/orders", response_model=schemas.Order, tags=["orders"])
 def create_order(
     order: schemas.OrderCreate,
     request: Request,
     response: Response,
-    db: Session = Depends(get_db)
+    db: Session = Depends(deps.get_db)
 ):
     db_order = crud.create_order(db=db, order=order)
     client_host = request.client.host
@@ -68,8 +53,20 @@ def create_order(
     return db_order
 
 
-@app.get("/orders", response_model=List[schemas.Order], tags=["orders"])
-def get_orders(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+@app.get(
+    "/orders",
+    response_model=List[schemas.Order],
+    dependencies=[Depends(Etag(deps.orders_etag))],
+    tags=["orders"],
+    responses={
+        '304': dict(description='Not Modified: Cache hit, ETag not expired')
+    }
+)
+def get_orders(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(deps.get_db)
+):
     return crud.get_orders(db, skip=skip, limit=limit)
 
 
@@ -77,13 +74,13 @@ def get_orders(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     "/orders/{order_id}",
     response_model=schemas.Order,
     tags=["orders"],
-    dependencies=[Depends(Etag(order_etag))],
+    dependencies=[Depends(Etag(deps.order_etag))],
     responses={
         '404': dict(model=schemas.ErrorMessage, description='Order not found'),
         '304': dict(description='Not Modified: Cache hit, ETag not expired')
     }
 )
-def get_order(order_id: int, db: Session = Depends(get_db)):
+def get_order(order_id: int, db: Session = Depends(deps.get_db)):
     db_order = crud.get_order(db, order_id=order_id)
     if db_order is None:
         raise HTTPException(status_code=404, detail="Order not found")
@@ -94,7 +91,7 @@ def get_order(order_id: int, db: Session = Depends(get_db)):
     "/orders/{order_id}",
     response_model=schemas.Order,
     tags=["orders"],
-    dependencies=[Depends(Etag(order_etag))],
+    dependencies=[Depends(Etag(deps.order_etag))],
     responses={
         '404': dict(model=schemas.ErrorMessage, description='Order not found'),
         '412': dict(description='Unprocessable Entity: ETag has expired')
@@ -103,7 +100,7 @@ def get_order(order_id: int, db: Session = Depends(get_db)):
 def update_order(
     order_id: int,
     order: schemas.OrderUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(deps.get_db)
 ):
     db_order = crud.update_order(db=db, order_id=order_id, order=order)
     if db_order is None:
@@ -115,7 +112,7 @@ def update_order(
     "/orders/{order_id}",
     status_code=204,
     tags=["orders"],
-    dependencies=[Depends(Etag(order_etag))],
+    dependencies=[Depends(Etag(deps.order_etag))],
     responses={
         '404': dict(model=schemas.ErrorMessage, description='Order not found'),
         '405': dict(
@@ -128,7 +125,7 @@ def update_order(
 )
 def archive_order(
     order_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(deps.get_db)
 ):
     status = crud.archive_order(db, order_id)
     if status is None:

@@ -37,6 +37,11 @@ def get_order(db: Session, order_id: int):
     return db.query(models.Order).filter(models.Order.id == order_id).first()
 
 
+def get_most_recent_order(db: Session):
+    return db.query(models.Order)\
+        .order_by(models.Order.updated_at.desc()).first()
+
+
 def get_orders(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Order).offset(skip).limit(limit).all()
 
