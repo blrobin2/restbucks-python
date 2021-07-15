@@ -116,8 +116,7 @@ class Order(Base):
 
     def can_delete(self) -> bool:
         current_status = self.status.name
-        return current_status != 'served' and current_status != 'collected'\
-            and current_status != 'cancelled'
+        return current_status not in ['served', 'collected', 'cancelled']
 
 
 class OrderItem(Base):
